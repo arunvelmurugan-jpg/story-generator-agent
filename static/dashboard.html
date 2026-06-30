@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHTN.AI Sub-Agent Execution Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            color: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* PHTN.AI Header */
+        .header {
+            background: #1a1a2e;
+            color: white;
+            padding: 0 1.5rem;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #2d2d44;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #a0a0b0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            background: #10b981;
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .status-badge.disconnected {
+            background: #ef4444;
+        }
+
+        .header-btn {
+            background: transparent;
+            border: 1px solid #3d3d5c;
+            color: #a0a0b0;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+
+        .header-btn:hover {
+            background: #2d2d44;
+            color: white;
+        }
+
+        /* Active Phase Badge */
+        .active-phase-badge {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-75%);
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            animation: badgePulse 2s infinite;
+        }
+
+        .active-phase-badge.show {
+            display: flex;
+        }
+
+        .active-phase-badge.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .active-phase-badge.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+            50% { box-shadow: 0 4px 25px rgba(59, 130, 246, 0.7); }
+        }
+
+        /* Main Layout - Fixed height */
+        .main-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 56px);
+            overflow: hidden;
+        }
+
+        /* Left Panel - Process Flow (75%) */
+        .process-panel {
+            width: 75%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e5e7eb;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fafbfc;
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-title i {
+            color: #3b82f6;
+        }
+
+        .panel-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .control-btn {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        /* Flowchart Container - Scrollable */
+        .flowchart-container {
+            flex: 1;
+            overflow: auto;
+            padding: 1rem;
+            background: #fefefe;
+            scroll-behavior: smooth;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Phase Animations */
+        @keyframes phasePulse {
+            0%, 100% { 
+                filter: drop-shadow(0 0 0 rgba(59, 130, 246, 0));
+            }
+            50% { 
+                filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.8));
+            }
+        }
+
+        @keyframes phaseActive {
+            0%, 100% { 
+                stroke-width: 3px;
+            }
+            50% { 
+                stroke-width: 5px;
+            }
+        }
+
+        /* Progress Footer - Compact */
+        .progress-footer {
+            padding: 0.75rem 1rem;
+            background: #fafbfc;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        .progress-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .progress-stats {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+        }
+
+        .stat-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+        }
+
+        .stat-icon.tokens { background: #dbeafe; color: #2563eb; }
+        .stat-icon.cost { background: #d1fae5; color: #059669; }
+        .stat-icon.latency { background: #fef3c7; color: #d97706; }
+        .stat-icon.tools { background: #e0e7ff; color: #4f46e5; }
+        .stat-icon.iterations { background: #fce7f3; color: #db2777; }
+
+        .stat-value {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .stat-label {
+            color: #6b7280;
+        }
+
+        .progress-bar-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            max-width: 250px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #3b82f6;
+            min-width: 35px;
+        }
+
+        /* Details Panel - Expandable */
+        .details-panel {
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            max-height: 200px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .details-panel.collapsed {
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .trace-section {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .trace-section:last-child {
+            border-bottom: none;
+        }
+
+        .trace-header {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .trace-header i {
+            color: #3b82f6;
+        }
+
+        .trace-content {
+            font-size: 0.7rem;
+            color: #6b7280;
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            max-height: 100px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .trace-item {
+            padding: 0.25rem 0;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+
+        .trace-item:last-child {
+            border-bottom: none;
+        }
+
+        .trace-item .iteration {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .trace-item .thought {
+            color: #059669;
+        }
+
+        .trace-item .action {
+            color: #d97706;
+        }
+
+        .trace-item .tool {
+            color: #7c3aed;
+        }
+
+        /* Right Panel - Chat (25%) */
+        .chat-panel {
+            width: 25%;
+            min-width: 300px;
+            max-width: 400px;
+            background: #fafbfc;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 0.75rem 1rem;
+            background: #1a1a2e;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .chat-header-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chat-header-title i {
+            color: #3b82f6;
+        }
+
+        .chat-header-subtitle {
+            font-size: 0.7rem;
+            color: #a0a0b0;
+            margin-top: 0.15rem;
+        }
+
+        /* Chat Messages - Scrollable area */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            background: #f5f5f5;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.5rem;
+            max-width: 95%;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+            align-self: flex-end;
+        }
+
+        .message-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+
+        .message.assistant .message-avatar {
+            background: #1a1a2e;
+            color: #3b82f6;
+        }
+
+        .message.user .message-avatar {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .message-body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.user .message-body {
+            align-items: flex-end;
+        }
+
+        .message-content {
+            padding: 0.6rem 0.8rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px 10px 10px 2px;
+        }
+
+        .message.user .message-content {
+            background: #1a1a2e;
+            color: white;
+            border-radius: 10px 10px 2px 10px;
+        }
+
+        .message-time {
+            font-size: 0.6rem;
+            color: #9ca3af;
+            margin-top: 0.15rem;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+            padding: 0.6rem 0.8rem;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Suggested Prompts - Compact */
+        .suggested-prompts {
+            padding: 0.5rem 0.75rem;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        .prompts-label {
+            font-size: 0.6rem;
+            color: #6b7280;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .prompts-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
+        .prompt-chip {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .prompt-chip:hover {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* Chat Input - Fixed at bottom */
+        .chat-input-area {
+            padding: 0.75rem;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 0.4rem;
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 0.3rem;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .chat-input-wrapper:focus-within {
+            border-color: #3b82f6;
+            background: white;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 0.4rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            min-height: 20px;
+            max-height: 80px;
+        }
+
+        .chat-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: #1a1a2e;
+            color: #3b82f6;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: #2d2d44;
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* Error Toast */
+        .error-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            display: none;
+        }
+
+        .error-toast.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .process-panel {
+                width: 100%;
+                height: 60%;
+            }
+
+            .chat-panel {
+                width: 100%;
+                height: 40%;
+                min-width: unset;
+                max-width: unset;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <span>PHTN.AI</span>
+            </div>
+            <span class="page-title" id="pageTitle">Sub-Agent Execution Monitor</span>
+            <span class="version-badge" id="versionBadge" style="font-size: 0.7rem; color: #6b7280; margin-left: 0.5rem;"></span>
+        </div>
+        <div class="header-right">
+            <div class="status-badge" id="connectionBadge">
+                <i class="fas fa-circle" style="font-size: 6px;"></i>
+                <span id="connectionStatus">Connected</span>
+            </div>
+            <button class="header-btn" onclick="resetExecution()">
+                <i class="fas fa-redo"></i>
+                Reset
+            </button>
+            <a href="/docs" class="header-btn" target="_blank">
+                <i class="fas fa-book"></i>
+                API Docs
+            </a>
+        </div>
+    </header>
+
+    <!-- Active Phase Badge -->
+    <div class="active-phase-badge" id="activePhaseBadge">
+        <i class="fas fa-cog fa-spin"></i>
+        <span id="activePhaseName">Processing...</span>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Process Flow Panel - Left 75% -->
+        <div class="process-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-project-diagram"></i>
+                    Agent Execution Flow
+                </div>
+                <div class="panel-controls">
+                    <button class="control-btn" onclick="zoomIn()" title="Zoom In">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="control-btn" onclick="zoomOut()" title="Zoom Out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="control-btn" onclick="resetZoom()" title="Reset">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button class="control-btn" onclick="toggleDetails()" title="Toggle Details">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flowchart-container" id="flowchartContainer">
+                <div class="mermaid" id="mermaidChart">
+flowchart TB
+    subgraph INPUT["📥 INPUT RECEIVED"]
+        I1["User message received"]
+    end
+
+    subgraph CONTEXT["🧠 CONTEXT BUILDING"]
+        C1["Memory retrieval"]
+        C2["Token budgeting"]
+        C3["Few-shot injection"]
+        C1 --> C2 --> C3
+    end
+
+    subgraph GUARD_IN["🛡️ INPUT GUARDRAILS"]
+        G1["PII detection"]
+        G2["Prompt injection check"]
+        G1 --> G2
+    end
+
+    subgraph REACT["🤖 REACT LOOP"]
+        direction TB
+        R1["💭 Thought"]
+        R2["🎯 Action"]
+        R3["👁️ Observation"]
+        R1 --> R2 --> R3
+        R3 -.->|"iterate"| R1
+    end
+
+    subgraph TOOLS["🔧 TOOL EXECUTION"]
+        T1["Tool: search_knowledge_base"]
+        T2["Tool: lookup_customer"]
+        T3["Tool: create_ticket"]
+    end
+
+    subgraph GUARD_OUT["🛡️ OUTPUT GUARDRAILS"]
+        GO1["Output validation"]
+        GO2["Toxicity check"]
+        GO1 --> GO2
+    end
+
+    subgraph MEMORY["💾 MEMORY UPDATE"]
+        M1["Store to short-term"]
+        M2["Update episodic"]
+        M1 --> M2
+    end
+
+    subgraph OUTPUT["📤 RESPONSE OUTPUT"]
+        O1["Final answer delivered"]
+    end
+
+    INPUT --> CONTEXT --> GUARD_IN --> REACT
+    REACT <--> TOOLS
+    REACT --> GUARD_OUT --> MEMORY --> OUTPUT
+
+    classDef pending fill:#f3f4f6,stroke:#d1d5db,stroke-width:2px
+    classDef active fill:#dbeafe,stroke:#3b82f6,stroke-width:3px
+    classDef completed fill:#d1fae5,stroke:#10b981,stroke-width:2px
+    classDef error fill:#fee2e2,stroke:#ef4444,stroke-width:2px
+    classDef warning fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
+                </div>
+            </div>
+
+            <!-- Progress Footer - Metrics -->
+            <div class="progress-footer">
+                <div class="progress-row">
+                    <div class="progress-stats">
+                        <div class="stat-item">
+                            <div class="stat-icon tokens">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <span class="stat-value" id="tokenCount">0</span>
+                            <span class="stat-label">tokens</span>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon cost">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <span class="stat-value" id="costValue">$0.00</span>
+                            <span class="stat-label">cost</span>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon latency">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <span class="stat-value" id="latencyValue">0ms</span>
+                            <span class="stat-label">latency</span>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon tools">
+                                <i class="fas fa-wrench"></i>
+                            </div>
+                            <span class="stat-value" id="toolCount">0</span>
+                            <span class="stat-label">tools</span>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon iterations">
+                                <i class="fas fa-sync"></i>
+                            </div>
+                            <span class="stat-value" id="iterationCount">0</span>
+                            <span class="stat-label">iterations</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <span class="progress-text" id="progressPercent">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details Panel - ReAct Trace & Tool Calls -->
+            <div class="details-panel" id="detailsPanel">
+                <div class="trace-section" id="reactTrace">
+                    <div class="trace-header">
+                        <i class="fas fa-brain"></i>
+                        ReAct Trace
+                    </div>
+                    <div class="trace-content" id="reactTraceContent">
+                        Waiting for execution...
+                    </div>
+                </div>
+                <div class="trace-section" id="toolTrace">
+                    <div class="trace-header">
+                        <i class="fas fa-tools"></i>
+                        Tool Calls
+                    </div>
+                    <div class="trace-content" id="toolTraceContent">
+                        No tool calls yet...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Panel - Right 25% -->
+        <div class="chat-panel">
+            <div class="chat-header">
+                <div class="chat-header-title">
+                    <i class="fas fa-comments"></i>
+                    Sub-Agent Chat
+                </div>
+                <div class="chat-header-subtitle">Interact with the agent and monitor execution</div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="message assistant">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-body">
+                        <div class="message-content">
+                            <strong>Welcome!</strong><br><br>
+                            I'm your PHTN.AI Sub-Agent. Ask me anything and watch the execution flow in real-time on the left panel.
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggested Prompts -->
+            <div class="suggested-prompts" id="suggestedPrompts">
+                <div class="prompts-label">Quick Actions</div>
+                <div class="prompts-grid">
+                    <div class="prompt-chip" onclick="useSuggestedPrompt('What can you help me with?')">
+                        Capabilities
+                    </div>
+                    <div class="prompt-chip" onclick="useSuggestedPrompt('Search for information about AI agents')">
+                        Search
+                    </div>
+                    <div class="prompt-chip" onclick="useSuggestedPrompt('Create a support ticket for login issues')">
+                        Create Ticket
+                    </div>
+                    <div class="prompt-chip" onclick="useSuggestedPrompt('Look up customer account ABC123')">
+                        Lookup
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input - Fixed at bottom -->
+            <div class="chat-input-area">
+                <div class="chat-input-wrapper">
+                    <textarea 
+                        class="chat-input" 
+                        id="chatInput" 
+                        placeholder="Type your message..." 
+                        rows="1"
+                        onkeydown="handleChatKeydown(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendChatMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div class="error-toast" id="errorToast"></div>
+
+    <script>
+        // =====================================================
+        // MERMAID INITIALIZATION
+        // =====================================================
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#dbeafe',
+                primaryTextColor: '#1a1a2e',
+                primaryBorderColor: '#3b82f6',
+                lineColor: '#6b7280',
+                secondaryColor: '#f3f4f6',
+                tertiaryColor: '#fafbfc',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '12px'
+            },
+            flowchart: {
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 15,
+                nodeSpacing: 30,
+                rankSpacing: 50,
+                useMaxWidth: false
+            }
+        });
+
+        // =====================================================
+        // STATE
+        // =====================================================
+        let chatHistory = [];
+        let chatSessionId = null;
+        let isProcessing = false;
+        let currentZoom = 1;
+        let statusEventSource = null;
+        let currentPhase = null;
+        let detailsExpanded = true;
+        
+        // Agent configuration loaded from API
+        let agentConfig = {
+            name: 'Sub-Agent',
+            description: 'PHTN.AI Sub-Agent',
+            version: '1.0.0',
+            skills: [],
+            tools: [],
+            capabilities: []
+        };
+
+        const phaseConfig = {
+            'INPUT': { name: 'Input Received', subgraphId: 'INPUT', color: '#3b82f6', icon: 'fa-inbox' },
+            'CONTEXT': { name: 'Context Building', subgraphId: 'CONTEXT', color: '#8b5cf6', icon: 'fa-brain' },
+            'GUARDRAILS_INPUT': { name: 'Input Guardrails', subgraphId: 'GUARD_IN', color: '#f59e0b', icon: 'fa-shield-alt' },
+            'REACT_LOOP': { name: 'ReAct Loop', subgraphId: 'REACT', color: '#3b82f6', icon: 'fa-sync' },
+            'LLM_CALL': { name: 'LLM Call', subgraphId: 'REACT', color: '#6366f1', icon: 'fa-microchip' },
+            'TOOL_CALL': { name: 'Tool Execution', subgraphId: 'TOOLS', color: '#7c3aed', icon: 'fa-wrench' },
+            'GUARDRAILS_OUTPUT': { name: 'Output Guardrails', subgraphId: 'GUARD_OUT', color: '#f59e0b', icon: 'fa-shield-alt' },
+            'MEMORY': { name: 'Memory Update', subgraphId: 'MEMORY', color: '#10b981', icon: 'fa-database' },
+            'OUTPUT': { name: 'Response Output', subgraphId: 'OUTPUT', color: '#10b981', icon: 'fa-paper-plane' }
+        };
+
+        const phaseOrder = ['INPUT', 'CONTEXT', 'GUARDRAILS_INPUT', 'REACT_LOOP', 'GUARDRAILS_OUTPUT', 'MEMORY', 'OUTPUT'];
+
+        // =====================================================
+        // INITIALIZATION
+        // =====================================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Initializing Sub-Agent Dashboard...');
+            
+            // Load agent configuration first
+            await loadAgentConfig();
+            
+            setTimeout(() => {
+                connectToExecutionStream();
+                console.log('SSE stream connected');
+            }, 1000);
+        });
+        
+        // =====================================================
+        // LOAD AGENT CONFIGURATION FROM API
+        // =====================================================
+        async function loadAgentConfig() {
+            try {
+                const response = await fetch('/.well-known/agent-card.json');
+                if (response.ok) {
+                    const agentCard = await response.json();
+                    
+                    // Update agent config from agent card
+                    agentConfig.name = agentCard.name || 'Sub-Agent';
+                    agentConfig.description = agentCard.description || 'PHTN.AI Sub-Agent';
+                    agentConfig.version = agentCard.version || '1.0.0';
+                    agentConfig.skills = agentCard.skills || [];
+                    
+                    // Extract tools from skills
+                    agentConfig.tools = agentConfig.skills.map(s => ({
+                        id: s.id,
+                        name: s.name,
+                        description: s.description
+                    }));
+                    
+                    // Get capabilities from extensions
+                    if (agentCard.extensions?.phtnai?.capabilities) {
+                        agentConfig.capabilities = agentCard.extensions.phtnai.capabilities;
+                    }
+                    
+                    // Update UI with loaded config
+                    updateUIFromConfig();
+                    
+                    console.log('Agent config loaded:', agentConfig);
+                }
+            } catch (error) {
+                console.error('Failed to load agent config:', error);
+            }
+        }
+        
+        // =====================================================
+        // UPDATE UI FROM AGENT CONFIG
+        // =====================================================
+        function updateUIFromConfig() {
+            // Update page title
+            document.title = `${agentConfig.name} - PHTN.AI`;
+            
+            // Update header title
+            const pageTitle = document.getElementById('pageTitle');
+            if (pageTitle) {
+                pageTitle.textContent = agentConfig.name;
+            }
+            
+            // Update version badge
+            const versionBadge = document.getElementById('versionBadge');
+            if (versionBadge && agentConfig.version) {
+                versionBadge.textContent = `v${agentConfig.version}`;
+            }
+            
+            // Update chat header
+            const chatHeaderTitle = document.querySelector('.chat-header-title');
+            if (chatHeaderTitle) {
+                chatHeaderTitle.innerHTML = `<i class="fas fa-comments"></i> ${agentConfig.name}`;
+            }
+            
+            const chatHeaderSubtitle = document.querySelector('.chat-header-subtitle');
+            if (chatHeaderSubtitle) {
+                chatHeaderSubtitle.textContent = agentConfig.description.substring(0, 60) + (agentConfig.description.length > 60 ? '...' : '');
+            }
+            
+            // Update welcome message with skills/tools info
+            const welcomeContent = document.querySelector('.message.assistant .message-content');
+            if (welcomeContent) {
+                let toolsList = '';
+                if (agentConfig.tools && agentConfig.tools.length > 0) {
+                    const toolNames = agentConfig.tools.map(t => t.name || t.id).slice(0, 3);
+                    toolsList = `<br><br><strong>Available tools:</strong> ${toolNames.join(', ')}${agentConfig.tools.length > 3 ? '...' : ''}`;
+                }
+                
+                welcomeContent.innerHTML = `
+                    <strong>Welcome!</strong><br><br>
+                    I'm your <strong>${agentConfig.name}</strong>. ${agentConfig.description}${toolsList}<br><br>
+                    <em>Ask me anything and watch the execution flow in real-time on the left panel.</em>
+                `;
+            }
+            
+            // Generate suggested prompts from tools/skills
+            generateSuggestedPrompts();
+            
+            // Update mermaid diagram with tools from config
+            updateMermaidDiagram();
+        }
+        
+        // =====================================================
+        // GENERATE SUGGESTED PROMPTS FROM CONFIG
+        // =====================================================
+        function generateSuggestedPrompts() {
+            const promptsGrid = document.querySelector('.prompts-grid');
+            if (!promptsGrid) return;
+            
+            // Clear existing prompts
+            promptsGrid.innerHTML = '';
+            
+            // Default prompts
+            const defaultPrompts = [
+                { label: 'Capabilities', prompt: 'What can you help me with?' },
+                { label: 'Help', prompt: 'Help me understand how to use you' }
+            ];
+            
+            // Generate prompts based on tools/skills
+            const toolPrompts = [];
+            
+            if (agentConfig.tools && agentConfig.tools.length > 0) {
+                agentConfig.tools.forEach(tool => {
+                    const toolName = tool.name || tool.id || 'tool';
+                    const toolId = tool.id || toolName.toLowerCase().replace(/\s+/g, '-');
+                    
+                    // Generate contextual prompts based on tool type
+                    if (toolId.includes('search') || toolId.includes('knowledge')) {
+                        toolPrompts.push({
+                            label: 'Search',
+                            prompt: `Search for information about ${agentConfig.name.includes('Customer') ? 'customer issues' : 'relevant topics'}`
+                        });
+                    } else if (toolId.includes('ticket') || toolId.includes('create')) {
+                        toolPrompts.push({
+                            label: 'Create Ticket',
+                            prompt: 'Create a support ticket for an issue'
+                        });
+                    } else if (toolId.includes('lookup') || toolId.includes('customer')) {
+                        toolPrompts.push({
+                            label: 'Lookup',
+                            prompt: 'Look up customer information'
+                        });
+                    } else {
+                        toolPrompts.push({
+                            label: toolName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                            prompt: `Use ${toolName} to help me`
+                        });
+                    }
+                });
+            }
+            
+            // Combine and deduplicate prompts
+            const allPrompts = [...defaultPrompts, ...toolPrompts.slice(0, 4)];
+            const uniquePrompts = allPrompts.filter((p, i, arr) => 
+                arr.findIndex(x => x.label === p.label) === i
+            ).slice(0, 4);
+            
+            // Render prompts
+            uniquePrompts.forEach(p => {
+                const chip = document.createElement('div');
+                chip.className = 'prompt-chip';
+                chip.textContent = p.label;
+                chip.onclick = () => useSuggestedPrompt(p.prompt);
+                promptsGrid.appendChild(chip);
+            });
+        }
+        
+        // =====================================================
+        // GENERATE MERMAID DIAGRAM FROM CONFIG
+        // =====================================================
+        function generateMermaidDiagram() {
+            // Build tool nodes dynamically from config
+            let toolNodes = '';
+            if (agentConfig.tools && agentConfig.tools.length > 0) {
+                agentConfig.tools.forEach((tool, idx) => {
+                    const toolName = tool.name || tool.id || `tool_${idx}`;
+                    const displayName = toolName.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                    toolNodes += `        T${idx + 1}["Tool: ${displayName}"]\n`;
+                });
+            } else {
+                toolNodes = '        T1["No tools configured"]\n';
+            }
+            
+            const diagram = `flowchart TB
+    subgraph INPUT["📥 INPUT RECEIVED"]
+        I1["User message received"]
+    end
+
+    subgraph CONTEXT["🧠 CONTEXT BUILDING"]
+        C1["Memory retrieval"]
+        C2["Token budgeting"]
+        C3["Few-shot injection"]
+        C1 --> C2 --> C3
+    end
+
+    subgraph GUARD_IN["🛡️ INPUT GUARDRAILS"]
+        G1["PII detection"]
+        G2["Prompt injection check"]
+        G1 --> G2
+    end
+
+    subgraph REACT["🤖 REACT LOOP"]
+        direction TB
+        R1["💭 Thought"]
+        R2["🎯 Action"]
+        R3["👁️ Observation"]
+        R1 --> R2 --> R3
+        R3 -.->|"iterate"| R1
+    end
+
+    subgraph TOOLS["🔧 TOOL EXECUTION"]
+${toolNodes}    end
+
+    subgraph GUARD_OUT["🛡️ OUTPUT GUARDRAILS"]
+        GO1["Output validation"]
+        GO2["Toxicity check"]
+        GO1 --> GO2
+    end
+
+    subgraph MEMORY["💾 MEMORY UPDATE"]
+        M1["Store to short-term"]
+        M2["Update episodic"]
+        M1 --> M2
+    end
+
+    subgraph OUTPUT["📤 RESPONSE OUTPUT"]
+        O1["Final answer delivered"]
+    end
+
+    INPUT --> CONTEXT --> GUARD_IN --> REACT
+    REACT <--> TOOLS
+    REACT --> GUARD_OUT --> MEMORY --> OUTPUT
+
+    classDef pending fill:#f3f4f6,stroke:#d1d5db,stroke-width:2px
+    classDef active fill:#dbeafe,stroke:#3b82f6,stroke-width:3px
+    classDef completed fill:#d1fae5,stroke:#10b981,stroke-width:2px
+    classDef error fill:#fee2e2,stroke:#ef4444,stroke-width:2px
+    classDef warning fill:#fef3c7,stroke:#f59e0b,stroke-width:2px`;
+            
+            return diagram;
+        }
+        
+        // Re-render mermaid diagram with updated config
+        async function updateMermaidDiagram() {
+            const mermaidContainer = document.getElementById('mermaidChart');
+            if (!mermaidContainer) return;
+            
+            // Generate new diagram
+            const diagram = generateMermaidDiagram();
+            
+            // Clear and re-render
+            mermaidContainer.innerHTML = diagram;
+            mermaidContainer.removeAttribute('data-processed');
+            
+            try {
+                await mermaid.run({ nodes: [mermaidContainer] });
+                console.log('Mermaid diagram updated with config');
+            } catch (e) {
+                console.error('Failed to render mermaid diagram:', e);
+            }
+        }
+
+        // =====================================================
+        // ZOOM CONTROLS
+        // =====================================================
+        function zoomIn() {
+            currentZoom = Math.min(currentZoom + 0.2, 3);
+            applyZoom();
+        }
+
+        function zoomOut() {
+            currentZoom = Math.max(currentZoom - 0.2, 0.3);
+            applyZoom();
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            const chart = document.querySelector('.mermaid svg');
+            if (chart) {
+                chart.style.transform = `scale(${currentZoom})`;
+                chart.style.transformOrigin = 'top center';
+            }
+        }
+
+        function toggleDetails() {
+            const panel = document.getElementById('detailsPanel');
+            detailsExpanded = !detailsExpanded;
+            panel.classList.toggle('collapsed', !detailsExpanded);
+        }
+
+        // =====================================================
+        // SSE CONNECTION - Execution Stream
+        // =====================================================
+        function connectToExecutionStream() {
+            if (statusEventSource) {
+                statusEventSource.close();
+            }
+
+            try {
+                statusEventSource = new EventSource('/api/v2/execution/stream');
+
+                statusEventSource.onopen = function() {
+                    console.log('Execution SSE connected');
+                    updateConnectionStatus(true);
+                };
+
+                statusEventSource.addEventListener('initial_state', function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleExecutionState(data);
+                    } catch (e) {
+                        console.error('Error parsing initial state:', e);
+                    }
+                });
+
+                statusEventSource.addEventListener('execution_status', function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleExecutionEvent(data);
+                    } catch (e) {
+                        console.error('Error parsing execution event:', e);
+                    }
+                });
+
+                statusEventSource.addEventListener('heartbeat', function(event) {
+                    console.log('Heartbeat received');
+                });
+
+                statusEventSource.onerror = function() {
+                    console.log('Execution SSE error, reconnecting...');
+                    updateConnectionStatus(false);
+                    setTimeout(connectToExecutionStream, 3000);
+                };
+            } catch (e) {
+                console.error('Failed to connect to execution SSE:', e);
+                updateConnectionStatus(false);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const badge = document.getElementById('connectionBadge');
+            const status = document.getElementById('connectionStatus');
+            
+            if (connected) {
+                badge.classList.remove('disconnected');
+                status.textContent = 'Connected';
+            } else {
+                badge.classList.add('disconnected');
+                status.textContent = 'Reconnecting...';
+            }
+        }
+
+        // =====================================================
+        // EXECUTION EVENT HANDLING
+        // =====================================================
+        function handleExecutionState(state) {
+            if (state.metrics) {
+                updateMetrics(state.metrics);
+            }
+            if (state.phase_states) {
+                Object.entries(state.phase_states).forEach(([phase, status]) => {
+                    highlightPhase(phase, status);
+                });
+            }
+            if (state.react_trace) {
+                updateReactTrace(state.react_trace);
+            }
+            if (state.tool_trace) {
+                updateToolTrace(state.tool_trace);
+            }
+        }
+
+        function handleExecutionEvent(event) {
+            const { phase, status, details, metrics, phase_states, react_trace, tool_trace } = event;
+            
+            console.log(`Execution event: ${phase} -> ${status}`, details);
+            
+            highlightPhase(phase, status);
+            
+            if (status === 'active') {
+                currentPhase = phase;
+                showActivePhaseBadge(phase, false);
+                scrollToPhase(phase);
+            } else if (status === 'completed') {
+                if (phase === 'OUTPUT') {
+                    showActivePhaseBadge(null, false);
+                }
+            } else if (status === 'error') {
+                showActivePhaseBadge(phase, true);
+            }
+            
+            if (metrics) {
+                updateMetrics(metrics);
+            }
+            
+            if (phase_states) {
+                updateProgress(phase_states);
+            }
+            
+            if (react_trace) {
+                updateReactTrace(react_trace);
+            }
+            
+            if (tool_trace) {
+                updateToolTrace(tool_trace);
+            }
+        }
+
+        function highlightPhase(phase, status) {
+            const svg = document.querySelector('.mermaid svg');
+            if (!svg) return;
+
+            const config = phaseConfig[phase];
+            if (!config) return;
+
+            const subgraphId = config.subgraphId;
+            
+            const clusters = svg.querySelectorAll('.cluster');
+            clusters.forEach(cluster => {
+                const label = cluster.querySelector('.cluster-label, text');
+                if (label && (label.textContent.includes(subgraphId) || cluster.id?.includes(subgraphId))) {
+                    const rect = cluster.querySelector('rect');
+                    if (rect) {
+                        if (status === 'active') {
+                            rect.style.stroke = '#3b82f6';
+                            rect.style.strokeWidth = '4px';
+                            rect.style.fill = '#dbeafe';
+                            rect.style.animation = 'phasePulse 1.5s infinite';
+                        } else if (status === 'completed') {
+                            rect.style.stroke = '#10b981';
+                            rect.style.strokeWidth = '3px';
+                            rect.style.fill = '#d1fae5';
+                            rect.style.animation = 'none';
+                        } else if (status === 'error') {
+                            rect.style.stroke = '#ef4444';
+                            rect.style.strokeWidth = '4px';
+                            rect.style.fill = '#fee2e2';
+                            rect.style.animation = 'none';
+                        } else if (status === 'warning') {
+                            rect.style.stroke = '#f59e0b';
+                            rect.style.strokeWidth = '3px';
+                            rect.style.fill = '#fef3c7';
+                            rect.style.animation = 'none';
+                        } else if (status === 'pending') {
+                            rect.style.stroke = '#d1d5db';
+                            rect.style.strokeWidth = '2px';
+                            rect.style.fill = '#f3f4f6';
+                            rect.style.animation = 'none';
+                        }
+                    }
+                }
+            });
+        }
+
+        function scrollToPhase(phase) {
+            const container = document.getElementById('flowchartContainer');
+            const svg = document.querySelector('.mermaid svg');
+            if (!container || !svg) return;
+
+            const config = phaseConfig[phase];
+            if (!config) return;
+
+            const subgraphId = config.subgraphId;
+            
+            const clusters = svg.querySelectorAll('.cluster');
+            clusters.forEach(cluster => {
+                const label = cluster.querySelector('.cluster-label, text');
+                if (label && (label.textContent.includes(subgraphId) || cluster.id?.includes(subgraphId))) {
+                    const bbox = cluster.getBBox ? cluster.getBBox() : null;
+                    if (bbox) {
+                        const scrollTop = (bbox.y * currentZoom) - (container.clientHeight / 3);
+                        container.scrollTo({
+                            top: Math.max(0, scrollTop),
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        }
+
+        function showActivePhaseBadge(phase, isError) {
+            const badge = document.getElementById('activePhaseBadge');
+            const nameSpan = document.getElementById('activePhaseName');
+            
+            if (!phase) {
+                badge.classList.remove('show');
+                return;
+            }
+            
+            const config = phaseConfig[phase];
+            if (!config) return;
+            
+            nameSpan.textContent = config.name;
+            badge.classList.remove('error', 'warning');
+            
+            if (isError) {
+                badge.classList.add('error');
+            }
+            
+            badge.classList.add('show');
+        }
+
+        function updateMetrics(metrics) {
+            document.getElementById('tokenCount').textContent = metrics.total_tokens?.toLocaleString() || '0';
+            document.getElementById('costValue').textContent = `$${(metrics.cost || 0).toFixed(4)}`;
+            document.getElementById('latencyValue').textContent = `${metrics.latency_ms || 0}ms`;
+            document.getElementById('toolCount').textContent = metrics.tool_calls || '0';
+            document.getElementById('iterationCount').textContent = metrics.iterations || '0';
+        }
+
+        function updateProgress(phaseStates) {
+            // Only count phases that are in phaseOrder (main workflow phases)
+            const completed = phaseOrder.filter(phase => phaseStates[phase] === 'completed').length;
+            const total = phaseOrder.length;
+            // Cap progress at 100%
+            const progress = Math.min(100, Math.round((completed / total) * 100));
+            
+            document.getElementById('progressPercent').textContent = `${progress}%`;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function updateReactTrace(trace) {
+            const content = document.getElementById('reactTraceContent');
+            if (!trace || trace.length === 0) {
+                content.textContent = 'Waiting for execution...';
+                return;
+            }
+            
+            content.innerHTML = trace.map(item => `
+                <div class="trace-item">
+                    <span class="iteration">[Iteration ${item.iteration}]</span>
+                    ${item.thought ? `<br><span class="thought">💭 ${item.thought.substring(0, 150)}${item.thought.length > 150 ? '...' : ''}</span>` : ''}
+                    ${item.action ? `<br><span class="action">🎯 ${item.action}</span>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function updateToolTrace(trace) {
+            const content = document.getElementById('toolTraceContent');
+            if (!trace || trace.length === 0) {
+                content.textContent = 'No tool calls yet...';
+                return;
+            }
+            
+            content.innerHTML = trace.map(item => `
+                <div class="trace-item">
+                    <span class="tool">🔧 ${item.tool_name}</span>
+                    <span style="color: ${item.success ? '#10b981' : '#ef4444'}">
+                        ${item.success ? '✓' : '✗'}
+                    </span>
+                    <span style="color: #6b7280">(${item.latency_ms || 0}ms)</span>
+                    ${item.output_preview ? `<br><span style="color: #6b7280; font-size: 0.65rem;">${item.output_preview.substring(0, 100)}${item.output_preview.length > 100 ? '...' : ''}</span>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function resetExecution() {
+            try {
+                await fetch('/api/v2/execution/reset', { method: 'POST' });
+                
+                phaseOrder.forEach(phase => highlightPhase(phase, 'pending'));
+                
+                updateMetrics({ total_tokens: 0, cost: 0, latency_ms: 0, tool_calls: 0, iterations: 0 });
+                document.getElementById('progressPercent').textContent = '0%';
+                document.getElementById('progressFill').style.width = '0%';
+                document.getElementById('reactTraceContent').textContent = 'Waiting for execution...';
+                document.getElementById('toolTraceContent').textContent = 'No tool calls yet...';
+                
+                showActivePhaseBadge(null, false);
+                
+                console.log('Execution state reset');
+            } catch (e) {
+                console.error('Failed to reset execution:', e);
+                showError('Failed to reset execution');
+            }
+        }
+
+        // =====================================================
+        // CHAT FUNCTIONS
+        // =====================================================
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 80) + 'px';
+        }
+
+        function handleChatKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage();
+            }
+        }
+
+        function useSuggestedPrompt(prompt) {
+            document.getElementById('chatInput').value = prompt;
+            sendChatMessage();
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatMarkdownToHtml(text) {
+            return text
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>')
+                .replace(/^• /gm, '&bull; ')
+                .replace(/^- /gm, '&bull; ');
+        }
+
+        function addMessageToChat(role, content, isHtml = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const avatar = role === 'assistant' 
+                ? '<i class="fas fa-robot"></i>' 
+                : '<i class="fas fa-user"></i>';
+
+            const displayContent = isHtml ? content : escapeHtml(content);
+
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-body">
+                    <div class="message-content">${displayContent}</div>
+                    <div class="message-time">${formatTime(new Date())}</div>
+                </div>
+            `;
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="message-avatar" style="background: #1a1a2e; color: #3b82f6;">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function showError(message) {
+            const toast = document.getElementById('errorToast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 5000);
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+
+            if (!message || isProcessing) return;
+
+            console.log('Sending message:', message);
+
+            document.getElementById('suggestedPrompts').style.display = 'none';
+
+            addMessageToChat('user', message);
+            chatHistory.push({ role: 'user', content: message });
+
+            input.value = '';
+            input.style.height = 'auto';
+
+            isProcessing = true;
+            sendBtn.disabled = true;
+
+            showTypingIndicator();
+
+            try {
+                const response = await fetch('/api/v2/', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: 'message/send',
+                        params: {
+                            message: {
+                                role: 'user',
+                                parts: [{ type: 'text', text: message }]
+                            }
+                        },
+                        id: Date.now().toString()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                removeTypingIndicator();
+
+                if (result.error) {
+                    throw new Error(result.error.message || 'Unknown error');
+                }
+
+                let assistantMessage = '';
+                
+                // Handle different response structures
+                if (result.result?.messages && Array.isArray(result.result.messages)) {
+                    // A2A format: result.messages[].parts[].text
+                    const agentMessages = result.result.messages.filter(m => m.role === 'agent');
+                    if (agentMessages.length > 0) {
+                        const lastMessage = agentMessages[agentMessages.length - 1];
+                        if (lastMessage.parts && Array.isArray(lastMessage.parts)) {
+                            assistantMessage = lastMessage.parts
+                                .filter(p => p.kind === 'text' || p.type === 'text')
+                                .map(p => p.text)
+                                .join('\n');
+                        }
+                    }
+                } else if (result.result?.message?.parts) {
+                    // Single message format
+                    assistantMessage = result.result.message.parts
+                        .filter(p => p.type === 'text' || p.kind === 'text')
+                        .map(p => p.text)
+                        .join('\n');
+                } else if (result.result?.content) {
+                    assistantMessage = result.result.content;
+                }
+                
+                // Fallback to JSON if no text found
+                if (!assistantMessage) {
+                    assistantMessage = JSON.stringify(result.result, null, 2);
+                }
+
+                const formattedMessage = formatMarkdownToHtml(assistantMessage);
+                addMessageToChat('assistant', formattedMessage, true);
+                chatHistory.push({ role: 'assistant', content: assistantMessage });
+
+            } catch (error) {
+                console.error('Chat error:', error);
+                removeTypingIndicator();
+                addMessageToChat('assistant', `Sorry, an error occurred: ${error.message}`);
+                showError(`Error: ${error.message}`);
+            }
+
+            isProcessing = false;
+            sendBtn.disabled = false;
+            input.focus();
+            
+            // Show suggested prompts again after response
+            document.getElementById('suggestedPrompts').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

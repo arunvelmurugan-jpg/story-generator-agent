@@ -1,0 +1,1226 @@
+{
+  "$schema": "./PHTN-AGENT-SCHEMA_v3.json",
+  "agent_id": "ba-story-generator-agent-001",
+  "name": "Story Generator Agent",
+  "description": "Generates INVEST-compliant user stories with acceptance criteria from epics/features. Supports parallel per-epic generation, story refinement, optional US governance scoring, and PRD traceability context.",
+  "version": "1.0.0",
+  "owner": "team_prd_workflow",
+  "tenant": "photonai",
+  "status": "production",
+  "category": "STORY_GENERATOR",
+  "tags": [
+    "photon",
+    "user-stories",
+    "invest",
+    "acceptance-criteria",
+    "epics",
+    "backlog",
+    "agent-5"
+  ],
+  "metadata": {
+    "created_at": "2026-05-12T00:00:00Z",
+    "updated_at": "2026-05-12T00:00:00Z",
+    "created_by": "team_prd_workflow",
+    "labels": {
+      "team": "prd-workflow",
+      "cost-center": "PRD-005",
+      "pipeline": "prd-agent-5"
+    },
+    "annotations": {},
+    "changelog": [
+      {
+        "version": "1.0.0",
+        "date": "2026-05-12",
+        "author": "team_prd_workflow",
+        "changes": [
+          "Initial production release of Story Generator Agent.",
+          "Converted to PHTN.AI sub-agent framework with full PHTN-AGENT.json config.",
+          "Preserved original /run endpoint contract: StoryRequest in, StoryResponse out.",
+          "Parallel per-epic asyncio.gather generation preserved.",
+          "US governance scoring call preserved.",
+          "STORY_GENERATOR_PROMPT and US_GOVERNANCE_SCORING_PROMPT loaded from original files via importlib."
+        ]
+      }
+    ]
+  },
+  "content_types_config": {
+    "input": ["application/json"],
+    "output": ["application/json"],
+    "streaming": false,
+    "supported_input_types": [
+      "TEXT",
+      "JSON_OBJECT"
+    ],
+    "supported_output_types": [
+      "JSON_OBJECT",
+      "ERROR"
+    ],
+    "default_input_encoding": "utf-8",
+    "default_output_encoding": "utf-8",
+    "mime_type_mappings": {
+      "TEXT": "text/plain",
+      "JSON_OBJECT": "application/json"
+    },
+    "multimodal": {
+      "enabled": false,
+      "max_parts": 1,
+      "image": {
+        "enabled": false,
+        "formats": [],
+        "max_size_bytes": 0,
+        "max_dimensions": {"width": 0, "height": 0}
+      },
+      "audio": {
+        "enabled": false,
+        "formats": [],
+        "max_size_bytes": 0,
+        "max_duration_seconds": 0
+      },
+      "video": {
+        "enabled": false,
+        "formats": [],
+        "max_size_bytes": 0,
+        "max_duration_seconds": 0
+      },
+      "document": {
+        "enabled": false,
+        "formats": [],
+        "max_size_bytes": 0
+      }
+    },
+    "artifacts": {
+      "enabled": false,
+      "max_count": 0,
+      "max_total_size_bytes": 0,
+      "supported_types": [],
+      "storage": {
+        "provider": "memory",
+        "bucket": "",
+        "prefix": "",
+        "retention_days": 7
+      }
+    },
+    "encoding": {
+      "supported": ["utf-8"],
+      "default": "utf-8",
+      "binary_default": "base64",
+      "compression_threshold_bytes": 10240
+    },
+    "validation": {
+      "strict_content_type": false,
+      "validate_mime_type": true,
+      "validate_encoding": true,
+      "max_content_size_bytes": 10485760,
+      "reject_unknown_types": false
+    }
+  },
+  "execution_config": {
+    "pattern": "SIMPLE",
+    "max_iterations": 1,
+    "timeout_seconds": 300,
+    "timeout_ms": 300000,
+    "retry_on_failure": true,
+    "max_retries": 2,
+    "enable_streaming": false,
+    "react_config": {
+      "thought_prefix": "Thought:",
+      "action_prefix": "Action:",
+      "observation_prefix": "Observation:",
+      "final_answer_prefix": "Final Answer:",
+      "max_reasoning_steps": 1
+    }
+  },
+  "execution_profile": {
+    "mode": "quality_first",
+    "allowed_modes": [
+      "cost_optimized",
+      "balanced",
+      "quality_first"
+    ],
+    "concurrency": 5,
+    "max_concurrent_requests": 10,
+    "max_concurrent_epics": 5,
+    "queue_size": 50
+  },
+  "domain": {
+    "primary": "STORY_GENERATION",
+    "industry": "software_development",
+    "sub_domain": "user-story-authoring",
+    "supported_domains": [
+      "BFSI",
+      "Healthcare",
+      "Retail",
+      "Telecom",
+      "Manufacturing",
+      "Logistics",
+      "Education",
+      "Insurance",
+      "Government",
+      "Automotive"
+    ],
+    "task_type": "GENERATION",
+    "language": "en",
+    "use_cases": [
+      "user_story_generation",
+      "story_refinement",
+      "us_governance_scoring",
+      "prd_traceability"
+    ],
+    "compliance": [
+      "GDPR",
+      "SOC2",
+      "ISO27001"
+    ],
+    "target_audience": [
+      "product_managers",
+      "developers",
+      "qa_engineers",
+      "business_analysts"
+    ],
+    "constraints": {
+      "restricted_content": [],
+      "required_disclaimers": []
+    },
+    "ontology": {
+      "enabled": false,
+      "terminology": {
+        "version": "1.0",
+        "standard": "agile-story-ontology",
+        "custom_terms": {
+          "Epic": "High-level feature group containing multiple features",
+          "UserStory": "INVEST-compliant story with asA/iWant/soThat format",
+          "AC": "Acceptance Criteria in Given/When/Then BDD format",
+          "INVEST": "Independent, Negotiable, Valuable, Estimable, Small, Testable"
+        },
+        "synonyms": {
+          "stories": ["user-stories", "requirements"],
+          "epic": ["feature-group", "capability"],
+          "ac": ["acceptance-criteria", "test-conditions"]
+        }
+      },
+      "knowledge_base": null,
+      "industry_standards": ["INVEST", "BDD", "Agile"],
+      "knowledge_graph": {
+        "enabled": false,
+        "max_nodes": 0,
+        "max_edges": 0,
+        "enable_inference": false,
+        "export_formats": []
+      },
+      "entity_extraction": {
+        "enabled": false,
+        "extract_persons": false,
+        "extract_organizations": false,
+        "extract_locations": false,
+        "extract_dates": false,
+        "extract_concepts": false,
+        "extract_relationships": false,
+        "min_confidence": 0.5,
+        "use_llm": false
+      },
+      "concepts": [],
+      "auto_populate_core_concepts": false
+    }
+  },
+  "model_config": {
+    "provider": "openai",
+    "primary_model": "gpt-4o",
+    "fallback_model": "gpt-4o",
+    "fallback_models": [],
+    "embedding_model": "",
+    "parameters": {
+      "temperature": 0.2,
+      "max_tokens": 16384,
+      "max_completion_tokens": 16384,
+      "top_p": 1.0,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0,
+      "reasoning_effort": ""
+    },
+    "routing_strategy": "primary_only",
+    "routing": {
+      "strategy": "primary_only",
+      "fallback_triggers": {
+        "timeout": false,
+        "error": false,
+        "rate_limit": false,
+        "schema_failure": false,
+        "low_confidence": false
+      },
+      "max_retries": 2,
+      "retry_backoff_ms": 500,
+      "circuit_breaker": {
+        "enabled": true,
+        "failure_threshold": 5,
+        "cooldown_seconds": 30
+      }
+    },
+    "determinism": {
+      "strict_mode": false,
+      "force_seed": false
+    },
+    "sla": {
+      "latency_ms_p50": 15000,
+      "latency_ms_p95": 90000,
+      "availability": 0.99,
+      "error_rate": 0.05
+    },
+    "azure_config": {
+      "endpoint": "",
+      "deployment": "",
+      "api_version": ""
+    },
+    "vision": {
+      "enabled": false,
+      "detail": "auto",
+      "max_images_per_request": 0,
+      "supported_formats": [],
+      "max_image_size_mb": 0
+    },
+    "audio": {
+      "enabled": false,
+      "input_formats": [],
+      "output_format": "",
+      "voice": "",
+      "max_audio_duration_seconds": 0
+    },
+    "structured_output": {
+      "enabled": true,
+      "strict": true,
+      "schemas": {
+        "story_response": {
+          "name": "story_response",
+          "description": "Generated INVEST-compliant user stories with acceptance criteria and optional US governance score",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "stories": {"type": "array", "description": "List of generated user stories"},
+              "us_governance": {"type": "object", "description": "Optional US governance scoring result"},
+              "input_tokens": {"type": "integer", "description": "Total prompt tokens consumed"},
+              "output_tokens": {"type": "integer", "description": "Total completion tokens consumed"}
+            },
+            "required": ["stories", "input_tokens", "output_tokens"],
+            "additionalProperties": false
+          },
+          "strict": true
+        }
+      }
+    },
+    "embeddings": {
+      "enabled": false,
+      "model": "",
+      "dimensions": 0,
+      "batch_size": 0
+    },
+    "moderation": {
+      "enabled": false,
+      "model": "",
+      "check_input": false,
+      "check_output": false,
+      "block_on_violation": false,
+      "categories_to_check": [],
+      "threshold_overrides": {}
+    },
+    "streaming": {
+      "enabled": false,
+      "include_usage": false,
+      "chunk_size": 1
+    },
+    "reasoning_models": {
+      "enabled": false,
+      "max_completion_tokens": 16384,
+      "reasoning_effort": ""
+    }
+  },
+  "prompt_config": {
+    "template_id": "story-generator-v1",
+    "template_version": "1.0.0",
+    "system_prompt": "",
+    "user_prompt_template": "",
+    "output_format": "json",
+    "input_schema": {
+      "contentType": "JSON_OBJECT",
+      "mimeType": "application/json",
+      "encoding": "utf-8",
+      "supportedContentTypes": ["TEXT", "JSON_OBJECT"],
+      "multimodal": {
+        "enabled": false,
+        "image": {"enabled": false},
+        "audio": {"enabled": false},
+        "video": {"enabled": false},
+        "document": {"enabled": false}
+      },
+      "validation": {
+        "maxLength": 10485760,
+        "requiredFields": ["epics"],
+        "properties": {
+          "epics": {"type": "array", "description": "List of epics with features to generate stories from"},
+          "capabilities": {"type": "array", "description": "Optional list of capabilities for context"},
+          "domain": {"type": "string", "description": "Industry domain for domain-specific guidance"},
+          "refine": {"type": "boolean", "description": "If true, refine a single story instead of generating"},
+          "story_to_refine": {"type": "object", "description": "Story object to refine (used when refine=true)"},
+          "user_instruction": {"type": "string", "description": "User instruction for story refinement"},
+          "grounded": {"type": "boolean", "description": "If true, generate only from provided epics/features"},
+          "fe_only": {"type": "boolean", "description": "If true, generate only front-end stories"},
+          "prd_sections": {"type": "array", "description": "Optional PRD sections for traceability context"}
+        }
+      }
+    },
+    "output_schema": {
+      "contentType": "JSON_OBJECT",
+      "mimeType": "application/json",
+      "encoding": "utf-8",
+      "supportedContentTypes": ["JSON_OBJECT", "ERROR"],
+      "artifacts": {
+        "enabled": false,
+        "types": [],
+        "maxCount": 0,
+        "maxTotalSizeBytes": 0
+      },
+      "streaming": {
+        "enabled": false,
+        "format": "SSE_EVENT",
+        "deltaFormat": "JSON_MERGE_PATCH"
+      },
+      "format": {
+        "includeReasoning": false,
+        "includeSources": false
+      },
+      "properties": {
+        "stories": {"type": "array", "description": "Generated INVEST-compliant user stories"},
+        "us_governance": {"type": "object", "description": "US governance scoring result (overallScore, subMetrics)"},
+        "input_tokens": {"type": "integer", "description": "Total prompt tokens consumed"},
+        "output_tokens": {"type": "integer", "description": "Total completion tokens consumed"}
+      }
+    },
+    "variables": [
+      "epics",
+      "capabilities",
+      "domain",
+      "refine",
+      "story_to_refine",
+      "user_instruction",
+      "grounded",
+      "fe_only",
+      "prd_sections"
+    ],
+    "tags": [
+      "user-stories",
+      "invest",
+      "epics",
+      "generation"
+    ],
+    "examples": []
+  },
+  "guardrails": {
+    "policies": [],
+    "enforcement_mode": "warn",
+    "pii_detection": false,
+    "phi_masking": false,
+    "toxicity_filtering": false,
+    "hallucination_detection": false,
+    "output_schema_validation": true,
+    "tool_call_validation": false,
+    "business_rule_enforcement": false,
+    "regulatory_enforcement": false,
+    "prompt_injection_detection": {
+      "enabled": false,
+      "action": "warn",
+      "sensitivity": "low"
+    },
+    "input": {
+      "pii_detection": false,
+      "toxicity_check": false,
+      "max_input_tokens": 64000,
+      "allowed_content_types": ["application/json"]
+    },
+    "output": {
+      "pii_redaction": false,
+      "hallucination_check": false,
+      "schema_validation": true,
+      "max_output_tokens": 16384
+    },
+    "input_guardrails": {
+      "max_input_length": 10485760,
+      "pii_detection": {
+        "enabled": false,
+        "types": [],
+        "action": "pass"
+      },
+      "prompt_injection_detection": {
+        "enabled": false,
+        "action": "warn"
+      }
+    },
+    "output_guardrails": {
+      "pii_leakage_prevention": {
+        "enabled": false,
+        "action": "pass"
+      },
+      "toxicity_detection": {
+        "enabled": false,
+        "provider": "",
+        "threshold": 0.8,
+        "action": "pass",
+        "categories": []
+      },
+      "hallucination_detection": {
+        "enabled": false,
+        "strategy": "none",
+        "threshold": 0.7,
+        "action": "pass",
+        "check_claims": false,
+        "check_numbers": false,
+        "check_entities": false,
+        "require_sources": false,
+        "min_source_coverage": 0
+      },
+      "forbidden_phrases": [],
+      "required_phrases": []
+    },
+    "tool_guardrails": {
+      "allowlist": [],
+      "max_calls_per_execution": 0,
+      "timeout_per_tool_ms": 30000
+    }
+  },
+  "tools": [],
+  "skills": [
+    {
+      "id": "stories.generate",
+      "name": "Generate Stories",
+      "description": "Create INVEST-compliant user stories from epics with acceptance criteria and quality scores",
+      "input_schema": {
+        "epics": "list[dict]",
+        "capabilities": "list[dict]",
+        "domain": "str",
+        "refine": "bool",
+        "story_to_refine": "dict",
+        "user_instruction": "str",
+        "grounded": "bool",
+        "fe_only": "bool",
+        "prd_sections": "list[dict] | null"
+      },
+      "output_schema": {
+        "stories": "list[dict]",
+        "us_governance": "dict | null",
+        "input_tokens": "int",
+        "output_tokens": "int"
+      }
+    },
+    {
+      "id": "stories.refine",
+      "name": "Refine Story",
+      "description": "AI-edit mode: refine a single existing user story based on user instruction"
+    },
+    {
+      "id": "stories.us_governance",
+      "name": "US Governance Scoring",
+      "description": "Score the full story set on prdEpicCoverage, acQuality, investScore, clarityScore"
+    },
+    {
+      "id": "stories.domain_guidance",
+      "name": "Domain Guidance",
+      "description": "Inject domain-specific compliance and functional guidance into story generation"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "cap.parallel_epic_generation",
+      "name": "Parallel Per-Epic Generation",
+      "description": "asyncio.gather with configurable semaphore generates stories for all epics in parallel"
+    },
+    {
+      "id": "cap.invest_compliance",
+      "name": "INVEST Compliance",
+      "description": "Each story validated against Independent, Negotiable, Valuable, Estimable, Small, Testable principles"
+    },
+    {
+      "id": "cap.grounded_generation",
+      "name": "Grounded vs Enhanced Generation",
+      "description": "Grounded mode limits stories strictly to provided epics; enhanced mode adds expert knowledge"
+    },
+    {
+      "id": "cap.fe_only_mode",
+      "name": "Front-End Only Mode",
+      "description": "Filters to UI/UX stories only, excluding backend, API, database, and infrastructure stories"
+    }
+  ],
+  "memory_config": {
+    "short_term": {
+      "enabled": true,
+      "max_entries": 10,
+      "ttl_seconds": 1800
+    },
+    "long_term": {
+      "enabled": false,
+      "provider": "none",
+      "host": "",
+      "port": 0,
+      "db": 0,
+      "ttl_days": 0
+    },
+    "semantic": {
+      "enabled": false,
+      "provider": "none",
+      "index_name": "",
+      "collection_name": "",
+      "namespace": "",
+      "embedding_model": "",
+      "embedding_provider": "",
+      "dimension": 0,
+      "metric": "cosine",
+      "environment": "",
+      "batch_size": 0,
+      "top_k": 0
+    },
+    "episodic": {
+      "enabled": false,
+      "max_episodes": 0
+    },
+    "compliance_logs": true,
+    "token_budget": 16384,
+    "semantic_cache": false,
+    "context_compression": {
+      "enabled": false,
+      "strategy": "none",
+      "max_tokens": 16384,
+      "target_compression_ratio": 1.0,
+      "preserve_recent_messages": 1,
+      "preserve_system_prompt": true,
+      "importance_threshold": 0,
+      "enable_semantic_dedup": false,
+      "dedup_similarity_threshold": 0
+    },
+    "reranker": {
+      "enabled": false,
+      "provider": "none",
+      "top_k": 0,
+      "min_score": 0,
+      "use_query_expansion": false,
+      "bm25_k1": 0,
+      "bm25_b": 0
+    }
+  },
+  "context_strategy": {
+    "builder": "simple",
+    "compression": "none",
+    "token_budgeting": false,
+    "include_system_prompt": true,
+    "include_memory": false,
+    "include_tools": false,
+    "context_window_management": {
+      "max_context_tokens": 64000,
+      "prioritization": "recency",
+      "include_system_in_budget": true,
+      "include_tools_in_budget": false
+    },
+    "retrieval_augmentation": {
+      "enabled": false,
+      "strategy": "none",
+      "top_k": 0,
+      "relevance_threshold": 0,
+      "min_relevance_score": 0,
+      "include_metadata": false
+    },
+    "few_shot_learning": {
+      "enabled": false,
+      "max_examples": 0,
+      "selection_strategy": "none"
+    }
+  },
+  "context_config": {},
+  "observability_config": {
+    "tracing": {
+      "enabled": true,
+      "exporter": "otlp",
+      "endpoint": "http://otel-collector:4317",
+      "sample_rate": 1.0,
+      "sampling_rate": 1.0
+    },
+    "metrics": {
+      "enabled": true,
+      "exporter": "prometheus",
+      "endpoint": "/metrics"
+    },
+    "logging": {
+      "enabled": true,
+      "level": "INFO",
+      "format": "json",
+      "include_trace_id": true,
+      "include_request_body": false,
+      "include_response_body": false
+    },
+    "x_phtn_agent_id": {
+      "enabled": true,
+      "propagate": true,
+      "agent_type": "SUB_AGENT",
+      "include_in_logs": true,
+      "include_in_metrics": true,
+      "include_in_response_headers": true
+    },
+    "evaluation_hooks": false,
+    "lineage_tracking": {
+      "enabled": false,
+      "include_context_sources": false,
+      "include_retrieval_scores": false,
+      "store_prompt_snapshot": false
+    }
+  },
+  "security": {
+    "rbac": {
+      "enabled": false,
+      "admin_roles": ["platform-admin"],
+      "operator_roles": ["story-agent-operator"],
+      "viewer_roles": ["story-agent-viewer"],
+      "roles": [
+        {
+          "name": "story-agent-operator",
+          "description": "Story generator agent operator with execution access",
+          "permissions": [
+            {"resource": "agent", "action": "execute"},
+            {"resource": "memory", "action": "read"},
+            {"resource": "memory", "action": "write"}
+          ]
+        }
+      ]
+    },
+    "abac": {
+      "enabled": false,
+      "policies": []
+    },
+    "tool_access_control": {
+      "default_deny": false,
+      "allow_tools": [],
+      "deny_tools": []
+    },
+    "authentication": {
+      "required": false,
+      "type": "none",
+      "methods": []
+    },
+    "rate_limiting": {
+      "enabled": false,
+      "strategy": "token_bucket",
+      "requests_per_minute": 100,
+      "burst_size": 20,
+      "window_size_seconds": 60,
+      "per_tenant": false,
+      "per_agent": false,
+      "per_endpoint": false
+    },
+    "encryption_at_rest": true,
+    "encryption_in_transit": true,
+    "secrets_management": {
+      "provider": "env",
+      "namespace": "prd-agents/story-generator",
+      "references": []
+    },
+    "api_key_rotation": {
+      "enabled": false,
+      "rotation_days": 0
+    },
+    "zero_trust": false,
+    "tool_sandboxing": {
+      "enabled": false,
+      "execution_mode": "none",
+      "network_policy": "none",
+      "allowed_domains": [],
+      "max_execution_time_ms": 30000
+    },
+    "agent_interaction_policy": {
+      "allowed_agents": ["prd-orchestrator-*"],
+      "cross_agent_memory_sharing": false,
+      "propagate_risk_level": false
+    },
+    "audit_logging": {
+      "enabled": true,
+      "log_inputs": false,
+      "log_outputs": false
+    }
+  },
+  "evaluation": {
+    "metrics": {
+      "hallucination": false,
+      "toxicity": false,
+      "pii_leakage": false,
+      "prompt_injection": false,
+      "relevance": false,
+      "faithfulness": false,
+      "helpfulness": false,
+      "tool_call_accuracy": false,
+      "goal_accuracy": true
+    }
+  },
+  "cost_governance": {
+    "token_usage_tracking": true,
+    "per_request_budget": null,
+    "per_agent_cost_cap": 50,
+    "per_tenant_budget": 500,
+    "real_time_budget_breaker": false,
+    "model_downgrade_strategy": "none",
+    "sla_aware_routing": false,
+    "cost_metrics": {
+      "avg_cost_per_request": 0.0,
+      "avg_tokens_per_request": 16384,
+      "cost_per_1k_tokens": 0.0
+    },
+    "pricing": {}
+  },
+  "regulatory_profile": {
+    "gdpr": true,
+    "eu_ai_act": false,
+    "hipaa": false,
+    "sox": false,
+    "dpdp_india": false,
+    "data_residency": "local",
+    "consent_management": false,
+    "human_oversight": false,
+    "explainability": false,
+    "explainability_config": {
+      "mode": "none",
+      "include_reasoning_summary": false,
+      "include_tool_trace": false
+    },
+    "audit_logging": {
+      "enabled": true,
+      "immutable": false,
+      "include_prompt_versions": false,
+      "include_model_versions": true,
+      "include_tool_calls": false,
+      "retention_days": 30
+    },
+    "data_privacy": {
+      "anonymize_logs": false,
+      "encrypt_at_rest": false,
+      "encrypt_in_transit": true,
+      "right_to_deletion": true,
+      "data_minimization": true
+    }
+  },
+  "risk_classification": {
+    "level": "low",
+    "mitigation": "Standard guardrails, output schema validation, parallel execution with semaphore-based concurrency control",
+    "assessment_history": [
+      {
+        "assessed_at": "2026-05-12T00:00:00Z",
+        "assessed_by": "team_prd_workflow",
+        "method": "manual",
+        "level": "low",
+        "notes": "Story generator reads epic/feature input and returns structured user stories — low risk as it generates agile artifacts only.",
+        "approved": true
+      }
+    ]
+  },
+  "lifecycle": {
+    "current_stage": "production",
+    "history": [
+      {
+        "from_stage": "development",
+        "to_stage": "production",
+        "changed_at": "2026-05-12T00:00:00Z",
+        "changed_by": "team_prd_workflow",
+        "reason": "Initial production deployment of Story Generator Agent converted to sub-agent framework"
+      }
+    ],
+    "rollback": {
+      "enabled": true,
+      "supported_to_stages": ["development"],
+      "requires_approval": false,
+      "approval_roles": ["team_prd_workflow"]
+    },
+    "versioning": {
+      "agent_version": "1.0.0",
+      "prompt_version": "1.0.0",
+      "model_version": "gpt-4o",
+      "policy_version": "2026.05"
+    }
+  },
+  "deployment_metadata": {
+    "environment": "production",
+    "region": "centralus",
+    "status": "production",
+    "deployment_strategy": "rolling",
+    "replicas": 1,
+    "port": 8080,
+    "feature_flags": [
+      "parallel_epic_generation",
+      "us_governance_scoring",
+      "grounded_generation",
+      "fe_only_mode",
+      "story_refinement"
+    ],
+    "autoscaling": {
+      "enabled": false,
+      "min_replicas": 1,
+      "max_replicas": 1,
+      "cpu_target_percent": 80
+    },
+    "kubernetes": {
+      "namespace": "prd-agents",
+      "service_account": "ba-story-generator-agent",
+      "deployment_name": "ba-story-generator-agent-001"
+    }
+  },
+  "a2a_protocol": {
+    "enabled": true,
+    "protocol_version": "1.0",
+    "endpoint": {"url": "/rpc", "method": "POST"},
+    "capabilities_advertised": ["STORY_GENERATOR_RUN"],
+    "skills_advertised": [
+      "stories.generate",
+      "stories.refine",
+      "stories.us_governance",
+      "stories.domain_guidance"
+    ],
+    "message_format": "JSON",
+    "discovery": {
+      "enabled": true,
+      "registry_url": "http://agent-registry:8080",
+      "heartbeat_interval_seconds": 30,
+      "capabilities_advertisement": true
+    },
+    "communication": {
+      "sync_timeout_ms": 300000,
+      "async_enabled": false,
+      "message_queue": "none",
+      "serialization": "json"
+    },
+    "delegation": {
+      "allow_delegation": false,
+      "max_delegation_depth": 0,
+      "delegation_timeout_ms": 0
+    },
+    "trust": {
+      "require_authentication": false,
+      "trust_level": "verified"
+    },
+    "content_negotiation": {
+      "default_input_modes": ["application/json"],
+      "default_output_modes": ["application/json"],
+      "accept_multimodal": false,
+      "prefer_streaming": false
+    }
+  },
+  "health_check": {
+    "enabled": true,
+    "health": {
+      "endpoint": "/health",
+      "include_details": true
+    },
+    "liveness": {
+      "enabled": true,
+      "endpoint": "/livez",
+      "initial_delay_seconds": 5,
+      "period_seconds": 10,
+      "timeout_seconds": 3,
+      "failure_threshold": 3,
+      "success_threshold": 1
+    },
+    "readiness": {
+      "enabled": true,
+      "endpoint": "/readyz",
+      "initial_delay_seconds": 3,
+      "period_seconds": 5,
+      "timeout_seconds": 3,
+      "failure_threshold": 3,
+      "success_threshold": 1
+    },
+    "startup": {
+      "enabled": true,
+      "endpoint": "/startupz",
+      "initial_delay_seconds": 0,
+      "period_seconds": 5,
+      "timeout_seconds": 3,
+      "failure_threshold": 10
+    },
+    "checks": {
+      "llm_connectivity": true,
+      "tool_availability": false,
+      "memory_backend": false,
+      "mcp_servers": false,
+      "dependencies": true,
+      "disk_space": false,
+      "memory_usage": false
+    },
+    "thresholds": {
+      "max_memory_percent": 90,
+      "max_disk_percent": 90,
+      "max_latency_ms": 300000
+    }
+  },
+  "mcp": {
+    "enabled": false,
+    "protocol_version": "1.0",
+    "role": "client",
+    "server_name": "ba-story-generator-agent",
+    "capabilities": {
+      "tools": false,
+      "resources": false,
+      "prompts": false,
+      "streaming": false,
+      "incremental_tool_calls": false
+    },
+    "servers": [],
+    "transport": {
+      "protocol": "http",
+      "authentication": "none",
+      "bidirectional": false
+    },
+    "server": {
+      "enabled": false,
+      "port": 8080,
+      "host": "0.0.0.0",
+      "expose_tools": false,
+      "expose_resources": false,
+      "expose_prompts": false
+    }
+  },
+  "resilience_config": {
+    "circuit_breaker": {
+      "enabled": false,
+      "failure_threshold": 5,
+      "recovery_timeout_ms": 15000,
+      "half_open_requests": 2
+    },
+    "retry": {
+      "enabled": true,
+      "max_attempts": 2,
+      "backoff_strategy": "exponential",
+      "initial_delay_ms": 500,
+      "max_delay_ms": 3000,
+      "jitter": true
+    },
+    "timeout": {
+      "default_ms": 300000,
+      "llm_ms": 300000,
+      "tool_ms": 30000
+    },
+    "rate_limiting": {
+      "enabled": false,
+      "requests_per_minute": 100,
+      "burst_size": 20,
+      "strategy": "token_bucket"
+    }
+  },
+  "llm_providers": {
+    "default_provider": "openai",
+    "openai": {
+      "enabled": true,
+      "api_key": "",
+      "organization": "",
+      "base_url": "https://api.openai.com/v1",
+      "model": "gpt-4o"
+    },
+    "anthropic": {
+      "enabled": false,
+      "api_key": ""
+    },
+    "azure_openai": {
+      "enabled": false,
+      "endpoint": "",
+      "deployment": "",
+      "api_version": ""
+    },
+    "bedrock": {
+      "enabled": false,
+      "region": "",
+      "model_id": "",
+      "profile_name": ""
+    },
+    "gemini": {
+      "enabled": false,
+      "api_key": "",
+      "project_id": "",
+      "location": "",
+      "use_vertex_ai": false
+    },
+    "ollama": {
+      "enabled": false,
+      "base_url": "http://localhost:11434",
+      "model": "llama3.2"
+    },
+    "groq": {
+      "enabled": false,
+      "api_key": "",
+      "model": ""
+    },
+    "mistral": {
+      "enabled": false,
+      "api_key": "",
+      "model": ""
+    },
+    "together": {
+      "enabled": false,
+      "api_key": "",
+      "model": ""
+    },
+    "cohere": {
+      "enabled": false,
+      "api_key": "",
+      "model": ""
+    }
+  },
+  "human_loop": {
+    "enabled": false,
+    "default_timeout_seconds": 0,
+    "require_approval_for_tools": [],
+    "require_approval_for_actions": [],
+    "auto_approve_low_risk": true,
+    "escalation_enabled": false,
+    "escalation_timeout_seconds": 0,
+    "notification_channels": [],
+    "webhook_url": null,
+    "approval_workflow": {
+      "type": "none",
+      "required_approvers": 0,
+      "approver_roles": []
+    }
+  },
+  "text_splitters": {
+    "default_splitter": "recursive_character",
+    "chunk_size": 500,
+    "chunk_overlap": 50,
+    "separators": ["\n\n", "\n", ". ", " ", ""],
+    "code_language": "python",
+    "token_encoding": "cl100k_base"
+  },
+  "output_parsers": {
+    "default_parser": "structured",
+    "structured": {
+      "strict": true,
+      "extract_json": true,
+      "allow_partial": false
+    },
+    "auto_fixing": {
+      "enabled": true,
+      "max_retries": 2,
+      "include_original_error": true
+    },
+    "item_list": {
+      "separator": "\n",
+      "numbered": false,
+      "min_items": 1,
+      "max_items": 200
+    }
+  },
+  "vector_stores": {
+    "default_provider": "memory",
+    "pinecone": {
+      "api_key": "",
+      "environment": "",
+      "index_name": "",
+      "namespace": ""
+    },
+    "chroma": {
+      "persist_directory": "",
+      "host": "",
+      "port": 0,
+      "collection_name": ""
+    },
+    "pgvector": {
+      "connection_string": "",
+      "host": "",
+      "port": 0,
+      "database": "",
+      "table_name": ""
+    },
+    "weaviate": {
+      "url": "",
+      "api_key": "",
+      "class_name": ""
+    },
+    "qdrant": {
+      "url": "",
+      "api_key": "",
+      "collection_name": ""
+    },
+    "embedding_dimension": 0,
+    "metric": "cosine"
+  },
+  "triggers": {
+    "webhook": {
+      "enabled": true,
+      "path": "/webhook",
+      "methods": ["POST"],
+      "authentication": "none",
+      "api_key": "",
+      "response_mode": "immediate"
+    },
+    "schedule": {
+      "enabled": false,
+      "cron": null,
+      "interval_seconds": null,
+      "timezone": "UTC"
+    },
+    "chat": {
+      "enabled": false,
+      "allowed_users": [],
+      "require_mention": false,
+      "prefix": null,
+      "max_history": 0
+    },
+    "event": {
+      "enabled": false,
+      "source": "none",
+      "topics": [],
+      "connection_string": null
+    }
+  },
+  "builtin_tools": {
+    "calculator": {
+      "enabled": false
+    },
+    "web_search": {
+      "enabled": false,
+      "provider": "",
+      "api_key": "",
+      "max_results": 0
+    },
+    "wikipedia": {
+      "enabled": false,
+      "language": "en"
+    },
+    "think": {
+      "enabled": false
+    },
+    "code_executor": {
+      "enabled": false,
+      "sandbox_mode": false,
+      "timeout_seconds": 0,
+      "allow_imports": false
+    },
+    "http_request": {
+      "enabled": false,
+      "allowed_domains": [],
+      "timeout_seconds": 0
+    },
+    "datetime": {
+      "enabled": false
+    }
+  },
+  "voice_config": {
+    "enabled": false,
+    "stt": {
+      "provider": "none",
+      "model": "",
+      "language": "en-US"
+    },
+    "tts": {
+      "provider": "none",
+      "model": "",
+      "voice": "",
+      "language": "en-US"
+    }
+  },
+  "rpa_config": {
+    "enabled": false,
+    "provider": "none",
+    "workflows": []
+  },
+  "governance_config": {
+    "enabled": false,
+    "policy_engine": "none",
+    "policies": []
+  }
+}

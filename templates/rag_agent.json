@@ -1,0 +1,96 @@
+{
+  "$schema": "../.phtnai/PHTN-AGENT-SCHEMA_v2.json",
+  "agent_id": "rag-agent-template",
+  "name": "RAG Agent Template",
+  "description": "Retrieval-Augmented Generation agent template for knowledge-grounded responses",
+  "version": "1.0.0",
+  "category": "KNOWLEDGE",
+  "tags": ["template", "rag", "retrieval", "knowledge-base"],
+  
+  "execution_config": {
+    "pattern": "RAG",
+    "timeout_ms": 60000,
+    "enable_streaming": true,
+    "rag_config": {
+      "retrieval_strategy": "hybrid",
+      "top_k": 5,
+      "min_relevance_score": 0.7,
+      "reranking_enabled": true,
+      "chunk_size": 512,
+      "chunk_overlap": 50
+    }
+  },
+  
+  "llm_config": {
+    "primary_model": {
+      "provider": "openai",
+      "model_id": "gpt-4-turbo-preview",
+      "temperature": 0.3,
+      "max_tokens": 4096
+    }
+  },
+  
+  "system_prompt": "You are a knowledgeable assistant that answers questions based on retrieved documents.\n\nGuidelines:\n1. Always base your answers on the provided context documents\n2. If the context doesn't contain relevant information, say so clearly\n3. Cite your sources when providing information\n4. Do not make up information not present in the context\n5. If you're uncertain, express your uncertainty",
+  
+  "input_schema": {
+    "content_types": ["TEXT", "QUERY"]
+  },
+  
+  "output_schema": {
+    "content_types": ["TEXT"],
+    "format": {
+      "include_sources": true,
+      "include_confidence": true
+    }
+  },
+  
+  "tools": [],
+  
+  "memory_config": {
+    "semantic": {
+      "enabled": true,
+      "provider": "pinecone",
+      "embedding_model": "text-embedding-3-small",
+      "dimension": 1536
+    },
+    "episodic": {
+      "enabled": true,
+      "max_episodes": 10
+    },
+    "token_budget": 12000
+  },
+  
+  "context_config": {
+    "include_system_prompt": true,
+    "include_memory": true,
+    "retrieval_augmentation": {
+      "enabled": true,
+      "top_k": 5,
+      "min_relevance_score": 0.7,
+      "include_metadata": true
+    }
+  },
+  
+  "guardrails_config": {
+    "enforcement_mode": "enforce",
+    "output_guardrails": {
+      "hallucination_detection": {
+        "enabled": true,
+        "threshold": 0.8,
+        "action": "warn"
+      }
+    }
+  },
+  
+  "observability_config": {
+    "tracing": {
+      "enabled": true
+    },
+    "metrics": {
+      "enabled": true
+    },
+    "logging": {
+      "level": "INFO"
+    }
+  }
+}

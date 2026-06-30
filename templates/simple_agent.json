@@ -1,0 +1,52 @@
+{
+  "$schema": "../.phtnai/PHTN-AGENT-SCHEMA_v2.json",
+  "agent_id": "simple-agent-template",
+  "name": "Simple Agent Template",
+  "description": "Basic agent template with minimal configuration for quick starts",
+  "version": "1.0.0",
+  "category": "GENERAL",
+  "tags": ["template", "simple", "starter"],
+  
+  "execution_config": {
+    "pattern": "SIMPLE",
+    "timeout_ms": 30000,
+    "enable_streaming": false
+  },
+  
+  "llm_config": {
+    "primary_model": {
+      "provider": "openai",
+      "model_id": "gpt-4-turbo-preview",
+      "temperature": 0.7,
+      "max_tokens": 2048
+    }
+  },
+  
+  "system_prompt": "You are a helpful AI assistant. Provide clear, accurate, and helpful responses.",
+  
+  "input_schema": {
+    "content_types": ["TEXT"]
+  },
+  
+  "output_schema": {
+    "content_types": ["TEXT"]
+  },
+  
+  "tools": [],
+  
+  "guardrails_config": {
+    "enforcement_mode": "warn",
+    "input_guardrails": {
+      "prompt_injection_detection": {
+        "enabled": true,
+        "action": "warn"
+      }
+    }
+  },
+  
+  "observability_config": {
+    "logging": {
+      "level": "INFO"
+    }
+  }
+}

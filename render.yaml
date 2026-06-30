@@ -1,0 +1,24 @@
+# Render Blueprint — deploy Story Generator Agent
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: story-generator-agent
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /sub-ba-story-generate/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: LLM_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o
+      - key: AGENT_URL
+        fromService:
+          type: web
+          name: story-generator-agent
+          property: host
+          # Render sets host; append subpath in app via AGENT_URL env override if needed

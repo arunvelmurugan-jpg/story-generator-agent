@@ -1,0 +1,102 @@
+{
+  "$schema": "../.phtnai/PHTN-AGENT-SCHEMA_v2.json",
+  "agent_id": "tool-agent-template",
+  "name": "Tool-Use Agent Template",
+  "description": "Agent template optimized for native LLM tool calling capabilities",
+  "version": "1.0.0",
+  "category": "AUTOMATION",
+  "tags": ["template", "tools", "function-calling", "automation"],
+  
+  "execution_config": {
+    "pattern": "TOOL_USE",
+    "max_iterations": 15,
+    "timeout_ms": 90000,
+    "enable_streaming": true,
+    "tool_use_config": {
+      "parallel_tool_calls": true,
+      "auto_execute": true,
+      "require_confirmation": false,
+      "max_tool_calls_per_turn": 5
+    }
+  },
+  
+  "llm_config": {
+    "primary_model": {
+      "provider": "openai",
+      "model_id": "gpt-4-turbo-preview",
+      "temperature": 0.2,
+      "max_tokens": 4096
+    },
+    "fallback_models": [
+      {
+        "provider": "anthropic",
+        "model_id": "claude-3-sonnet-20240229",
+        "temperature": 0.2,
+        "max_tokens": 4096
+      }
+    ]
+  },
+  
+  "system_prompt": "You are an automation agent with access to various tools.\n\nGuidelines:\n1. Analyze the user's request and determine which tools are needed\n2. Call tools in the most efficient order\n3. Handle tool errors gracefully and try alternatives\n4. Provide clear summaries of actions taken\n5. Ask for clarification if the request is ambiguous",
+  
+  "input_schema": {
+    "content_types": ["TEXT", "STRUCTURED_DATA", "COMMAND"]
+  },
+  
+  "output_schema": {
+    "content_types": ["TEXT", "STRUCTURED_DATA", "ACTION_RESULT"],
+    "format": {
+      "include_tool_calls": true,
+      "include_execution_log": true
+    }
+  },
+  
+  "tools": [],
+  
+  "memory_config": {
+    "short_term": {
+      "enabled": true,
+      "max_entries": 50
+    },
+    "episodic": {
+      "enabled": true,
+      "max_episodes": 20
+    }
+  },
+  
+  "guardrails_config": {
+    "enforcement_mode": "enforce",
+    "tool_guardrails": {
+      "require_approval_for": [],
+      "max_calls_per_execution": 20,
+      "timeout_per_tool_ms": 30000
+    }
+  },
+  
+  "security_config": {
+    "tool_sandboxing": {
+      "enabled": true,
+      "network_access": "restricted",
+      "file_system_access": "none"
+    }
+  },
+  
+  "resilience_config": {
+    "retry": {
+      "enabled": true,
+      "max_attempts": 3
+    },
+    "timeout": {
+      "tool_ms": 30000
+    }
+  },
+  
+  "observability_config": {
+    "tracing": {
+      "enabled": true
+    },
+    "logging": {
+      "level": "INFO"
+    }
+  }
+}
